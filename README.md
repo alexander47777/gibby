@@ -17,6 +17,12 @@ This tool helps identify potential security leaks in publicly available GitHub r
 
    ```bash
    git clone https://github.com/alexander47777/gibby.git
+   ```
+
+2. **Use pip3 to install the dependencies like this:**
+
+   ```bash
+   pip3 install -r requirements.txt
 
 ## 🚀 Usage
 You can run the tool using the command line by providing the domain file.
