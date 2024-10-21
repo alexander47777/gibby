@@ -23,7 +23,7 @@ You can run the tool using the command line by providing the domain and keyword 
 
 Example:
   ```bash
-  python gibby.py domains.txt keywords.txt
+  python gibby.py domains.txt
   ```
 **domains.txt**: A file containing the list of domains you want to search for.
 
