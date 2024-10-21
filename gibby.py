@@ -14,7 +14,7 @@ GITHUB_API_URL = "https://api.github.com/search/code"
 GITHUB_RATE_LIMIT_URL = "https://api.github.com/rate_limit"
 
 # Hard-coded GitHub API Token
-GITHUB_TOKEN = ""
+GITHUB_TOKEN = "YOUR-GITHUB-TOKEN-HERE"
 
 # Sensitive data patterns (predefined)
 
