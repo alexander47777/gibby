@@ -17,3 +17,13 @@ This tool helps identify potential security leaks in publicly available GitHub r
 
    ```bash
    git clone https://github.com/alexander47777/gibby.git
+
+## 🚀 Usage
+You can run the tool using the command line by providing the domain and keyword files.
+
+Example:
+```bash
+python gibby.py domains.txt keywords.txt
+```
+domains.txt: A file containing the list of domains you want to search for.
+
