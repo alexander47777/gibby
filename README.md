@@ -22,8 +22,8 @@ This tool helps identify potential security leaks in publicly available GitHub r
 You can run the tool using the command line by providing the domain and keyword files.
 
 Example:
-```bash
-python gibby.py domains.txt keywords.txt
-```
-domains.txt: A file containing the list of domains you want to search for.
+  ```bash
+  python gibby.py domains.txt keywords.txt
+  ```
+**domains.txt**: A file containing the list of domains you want to search for.
 
