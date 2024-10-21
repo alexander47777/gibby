@@ -14,7 +14,7 @@ GITHUB_API_URL = "https://api.github.com/search/code"
 GITHUB_RATE_LIMIT_URL = "https://api.github.com/rate_limit"
 
 # Hard-coded GitHub API Token
-GITHUB_TOKEN = "YOUR-GITHUB-TOKEN-HERE"
+GITHUB_TOKEN = "YOUR-TOEKNS-HERE"
 
 # Sensitive data patterns (predefined)
 
@@ -90,6 +90,8 @@ PATTERNS = {
     'VIP_GITHUB_DEPLOY_KEY': r'vip_github_deploy_key["\']?\s*[:=]\s*["\']?[A-Za-z0-9-_]{32,}',  # VIP GitHub deploy key
     'WORDPRESS_DB_PASSWORD': r'wordpress_db_password["\']?\s*[:=]\s*["\']?[A-Za-z0-9-_!@#$%^&*]{8,}',  # WordPress DB password
     'YT_CLIENT_SECRET': r'yt_client_secret["\']?\s*[:=]\s*["\']?[A-Za-z0-9-_]{32,}',  # YouTube client secret
+    'DB_USERNAME': r'db[_-]?username["\']?\s*[:=]\s*["\']?[A-Za-z0-9-_]{3,}',  # Generic database username
+    'DB_PASSWORD': r'db[_-]?password["\']?\s*[:=]\s*["\']?[A-Za-z0-9-_!@#$%^&*]{8,}'  # Generic database password
 }
 
 
@@ -98,19 +100,30 @@ PATTERNS = {
 def check_rate_limit():
     headers = {'Authorization': f'token {GITHUB_TOKEN}'}
     response = requests.get(GITHUB_RATE_LIMIT_URL, headers=headers)
-    rate_limit = response.json()['resources']['core']
-    remaining = rate_limit['remaining']
-    reset_time = rate_limit['reset']
-    return remaining, reset_time
+    
+    if response.status_code == 200:
+        rate_limit = response.json()['resources']['core']
+        remaining = rate_limit['remaining']
+        reset_time = rate_limit['reset']
+        return remaining, reset_time
+    else:
+        print(f"{Fore.RED}Error checking rate limit: {response.status_code} {response.text}")
+        return None, None
 
-# Function to enforce rate limit
+# Function to enforce rate limit with improved logging
 def enforce_rate_limit():
     remaining, reset_time = check_rate_limit()
-    if remaining == 0:
-        wait_time = reset_time - time.time()  # Time to wait until rate limit reset
-        if wait_time > 0:
-            print(f"{Fore.YELLOW}Rate limit exceeded. Waiting for {wait_time:.2f} seconds until reset...")
-            time.sleep(wait_time + 10)  # Add 10 seconds buffer after rate limit reset
+    if remaining is not None and reset_time is not None:
+        if remaining == 0:
+            wait_time = reset_time - time.time()  # Time to wait until rate limit reset
+            if wait_time > 0:
+                print(f"{Fore.YELLOW}Rate limit exceeded. Waiting for {wait_time:.2f} seconds until reset...")
+                time.sleep(wait_time + 10)  # Add 10 seconds buffer after rate limit reset
+        else:
+            print(f"{Fore.GREEN}Rate limit check passed: {remaining} requests remaining.")
+    else:
+        print(f"{Fore.RED}Unable to retrieve rate limit information.")
+
 
 # Function to search GitHub with pagination support
 def search_github(domain, pattern_name, pattern):
@@ -176,7 +189,6 @@ def search_for_patterns(file_content):
     return found_patterns
 
 # Main function for CLI
-import argparse
 
 def read_file_lines(filename):
     # Placeholder function for reading file lines.
