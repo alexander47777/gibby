@@ -27,3 +27,8 @@ Example:
   ```
 **domains.txt**: A file containing the list of domains you want to search for.
 
+##🛠️ Customization
+You can customize the tool by adding or modifying the keywords and domains to suit your specific use case.
+
+##📜 License
+This project is licensed under the MIT License - see the LICENSE file for details.
