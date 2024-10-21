@@ -19,7 +19,7 @@ This tool helps identify potential security leaks in publicly available GitHub r
    git clone https://github.com/alexander47777/gibby.git
 
 ## 🚀 Usage
-You can run the tool using the command line by providing the domain and keyword files.
+You can run the tool using the command line by providing the domain file.
 
 Example:
   ```bash
