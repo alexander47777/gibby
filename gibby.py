@@ -5,6 +5,7 @@ import time
 from base64 import b64decode
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from colorama import Fore, Style, init
+import subprocess  # To fetch latest commit information
 
 # Initialize colorama
 init(autoreset=True)
@@ -14,10 +15,9 @@ GITHUB_API_URL = "https://api.github.com/search/code"
 GITHUB_RATE_LIMIT_URL = "https://api.github.com/rate_limit"
 
 # Hard-coded GitHub API Token
-GITHUB_TOKEN = "YOUR-TOEKNS-HERE"
+GITHUB_TOKEN = "YOUR-TOKEN-HERE"
 
 # Sensitive data patterns (predefined)
-
 PATTERNS = {
     'API_KEY': r'api_key["\']?\s*[:=]\s*["\']?[A-Za-z0-9-_]{20,}',  # Generic API key pattern
     'AWS_ACCESS_KEY': r'AKIA[0-9A-Z]{16}',  # AWS Access Key ID
@@ -65,7 +65,6 @@ PATTERNS = {
     'DATABASE_PASSWORD': r'database_password["\']?\s*[:=]\s*["\']?[A-Za-z0-9-_!@#$%^&*]{8,}',  # Database password
     'DOCKER_HUB_PASSWORD': r'docker_hub_password["\']?\s*[:=]\s*["\']?[A-Za-z0-9-_!@#$%^&*]{8,}',  # Docker Hub password
     'ELASTICSEARCH_PASSWORD': r'elasticsearch_password["\']?\s*[:=]\s*["\']?[A-Za-z0-9-_!@#$%^&*]{8,}',  # Elasticsearch password
-    'EMAIL': r'[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+',  # Generic email pattern
     'EXP_PASSWORD': r'exp_password["\']?\s*[:=]\s*["\']?[A-Za-z0-9-_!@#$%^&*]{8,}',  # Expo CLI password
     'FIREBASE_API_TOKEN': r'firebase_api_token["\']?\s*[:=]\s*["\']?[A-Za-z0-9-_]{32,}',  # Firebase API token
     'FTP_LOGIN': r'ftp://[^:]+:(.+)@',  # FTP login credentials
@@ -93,8 +92,7 @@ PATTERNS = {
     'DB_USERNAME': r'db[_-]?username["\']?\s*[:=]\s*["\']?[A-Za-z0-9-_]{3,}',  # Generic database username
     'DB_PASSWORD': r'db[_-]?password["\']?\s*[:=]\s*["\']?[A-Za-z0-9-_!@#$%^&*]{8,}'  # Generic database password
 }
-
-
+ 
 
 # Function to check GitHub API rate limits
 def check_rate_limit():
@@ -123,7 +121,6 @@ def enforce_rate_limit():
             print(f"{Fore.GREEN}Rate limit check passed: {remaining} requests remaining.")
     else:
         print(f"{Fore.RED}Unable to retrieve rate limit information.")
-
 
 # Function to search GitHub with pagination support
 def search_github(domain, pattern_name, pattern):
@@ -188,14 +185,33 @@ def search_for_patterns(file_content):
 
     return found_patterns
 
+# Function to get the latest git commit information
+def get_latest_commit_info(repo_url):
+    # Extract the repository path from the URL
+    match = re.search(r"github\.com/([^/]+)/([^/]+)", repo_url)
+    if match:
+        owner = match.group(1)
+        repo = match.group(2).split("/")[0]  # Get the repository name
+        commits_url = f"https://api.github.com/repos/{owner}/{repo}/commits"
+
+        headers = {'Authorization': f'token {GITHUB_TOKEN}'}
+        response = requests.get(commits_url, headers=headers)
+
+        if response.status_code == 200:
+            commit_data = response.json()[0]  # Get the latest commit
+            commit_hash = commit_data['sha']
+            commit_message = commit_data['commit']['message']
+            commit_date = commit_data['commit']['committer']['date']
+            return commit_hash, commit_message, commit_date
+        else:
+            print(f"{Fore.RED}Error retrieving commit info: {response.status_code} {response.text}")
+            return None, None, None
+    else:
+        print(f"{Fore.RED}Error extracting repository info from URL: {repo_url}")
+        return None, None, None
+
+
 # Main function for CLI
-
-def read_file_lines(filename):
-    # Placeholder function for reading file lines.
-    # Replace this with your actual implementation.
-    with open(filename, 'r') as file:
-        return [line.strip() for line in file.readlines()]
-
 def main():
     parser = argparse.ArgumentParser(description='GitHub Leak Detection Tool')
     parser.add_argument('domain_file', type=str, help='File containing list of domains to search for')
@@ -240,7 +256,6 @@ def main():
     for line in footer:
         print(line)
 
-    
     for domain in domains:
         for pattern_name, pattern in PATTERNS.items():
             print()
@@ -258,6 +273,19 @@ def main():
                     try:
                         file_content = future.result()
                         if file_content:
+                            # Fetch latest commit info for each file
+                            repo_url = item['html_url']
+                            commit_hash, commit_message, commit_date = get_latest_commit_info(repo_url)
+                            
+                            # Print the latest commit info if available
+                            if commit_hash and commit_message and commit_date:
+                                print(f"\n{Fore.GREEN}=============================================================")
+                                print(f"\n{Fore.GREEN}Latest commit hash: {commit_hash}")
+                                print(f"{Fore.YELLOW}Commit message: {commit_message}")
+                                print(f"{Fore.CYAN}Commit date: {commit_date}")
+                                print(f"\n{Fore.GREEN}=============================================================")
+                            
+                            # Now search for patterns in file content
                             found_patterns = search_for_patterns(file_content)
                             if found_patterns:
                                 print(f"\n{Fore.CYAN}📄 File: {item['html_url']}")
